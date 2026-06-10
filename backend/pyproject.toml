@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "kalibr-backend"
+version = "0.1.0"
+description = "Kalibr AI Resume Tailoring Backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.111.*",
+    "uvicorn[standard]",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-multipart",
+    "firebase-admin==6.*",
+    "supabase",
+    "celery[redis]",
+    "redis",
+    "openai",
+    "pdfplumber==0.11.*",
+    "python-docx==1.*",
+    "sentence-transformers",
+    "playwright",
+    "cryptography",
+    "slowapi",
+    "httpx",
+    "python-dotenv",
+    "resend",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pyright",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "workers*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
