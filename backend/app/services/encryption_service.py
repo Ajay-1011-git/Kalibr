@@ -1,21 +1,41 @@
 """
-Encryption service stub.
-Provides Fernet symmetric encryption for sensitive user credentials
-(e.g., job board passwords stored for auto-apply).
+Fernet symmetric encryption service.
+
+Used to encrypt/decrypt sensitive user credentials (job-board usernames
+and passwords) before storing them in the board_credentials table.
+
+The module exposes a lazy-initialised singleton via `get_encryption_service()`.
 """
 
+from cryptography.fernet import Fernet
 
-def encrypt(plaintext: str) -> str:
-    """
-    Stub: Encrypt a plaintext string using the FERNET_KEY from settings.
-    Returns the base64-encoded ciphertext.
-    """
-    raise NotImplementedError("encryption_service.encrypt is not implemented yet.")
+from app.config import settings
 
 
-def decrypt(ciphertext: str) -> str:
-    """
-    Stub: Decrypt a Fernet-encrypted ciphertext string.
-    Returns the original plaintext.
-    """
-    raise NotImplementedError("encryption_service.decrypt is not implemented yet.")
+class EncryptionService:
+    def __init__(self, key: bytes) -> None:
+        self.f = Fernet(key)
+
+    def encrypt(self, plaintext: str) -> str:
+        """Return base64-URL Fernet token for *plaintext*."""
+        return self.f.encrypt(plaintext.encode()).decode()
+
+    def decrypt(self, ciphertext: str) -> str:
+        """Decrypt a Fernet token and return the original plaintext."""
+        return self.f.decrypt(ciphertext.encode()).decode()
+
+
+_instance: EncryptionService | None = None
+
+
+def get_encryption_service() -> EncryptionService:
+    """Return the module-level EncryptionService singleton, initialised lazily."""
+    global _instance
+    if _instance is None:
+        if not settings.fernet_key:
+            raise RuntimeError(
+                "FERNET_KEY is not configured. "
+                "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+        _instance = EncryptionService(settings.fernet_key.encode())
+    return _instance
