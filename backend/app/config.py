@@ -2,7 +2,7 @@
 Application configuration — reads all environment variables via pydantic-settings.
 """
 
-from pydantic import field_validator
+from pydantic import computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,7 +49,13 @@ class Settings(BaseSettings):
 
     # ── App ───────────────────────────────────────────────────────────────────
     environment: str = "development"
-    allowed_origins: list[str] = ["http://localhost:5173"]
+    allowed_origins_str: str = "http://localhost:5173"
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def allowed_origins(self) -> list[str]:
+        """Parse ALLOWED_ORIGINS from comma-separated string to list."""
+        return [origin.strip() for origin in self.allowed_origins_str.split(",") if origin.strip()]
 
 
 settings = Settings()

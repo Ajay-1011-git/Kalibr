@@ -68,7 +68,7 @@ async def verify_firebase_token(body: FirebaseTokenRequest) -> VerifyResponse:
         .execute()
     )
 
-    if existing.data:
+    if existing and existing.data:
         return VerifyResponse(user_id=existing.data["id"], is_new_user=False)
 
     # ── 3. First-time user — insert row ──────────────────────────────────────

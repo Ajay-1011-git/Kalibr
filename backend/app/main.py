@@ -108,6 +108,15 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     )
 
 
+# ── Health check ──────────────────────────────────────────────────────────────
+
+
+@app.get("/v1/health", tags=["health"])
+async def health_check() -> dict[str, str]:
+    """Health check endpoint for Docker healthcheck."""
+    return {"status": "healthy", "service": "kalibr-backend"}
+
+
 # ── Routers (all under /v1) ───────────────────────────────────────────────────
 
 
@@ -123,10 +132,3 @@ app.include_router(auto_apply.router,     prefix="/v1/auto-apply",     tags=["au
 app.include_router(alerts.router,         prefix="/v1/alerts",         tags=["alerts"])
 app.include_router(interview_prep.router, prefix="/v1/interview-prep", tags=["interview_prep"])
 
-
-# ── Health ────────────────────────────────────────────────────────────────────
-
-
-@app.get("/health", tags=["health"])
-async def health_check() -> dict[str, str]:
-    return {"status": "ok"}

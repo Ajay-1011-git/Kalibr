@@ -1,18 +1,18 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+  # Redis must start first
+  redis:
+    image: redis:7-alpine
     ports:
-      - "5173:5173"
+      - "6379:6379"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - backend
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
+  # Backend depends on Redis
   backend:
     build:
       context: ./backend
@@ -24,8 +24,16 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
+  # Worker depends on Redis and backend
   worker:
     build:
       context: ./backend
@@ -37,8 +45,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
+  # Beat depends on Redis and backend
   beat:
     build:
       context: ./backend
@@ -50,14 +60,25 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
-  redis:
-    image: redis:7-alpine
+  # Frontend depends on backend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "6379:6379"
+      - "5173:5173"
     volumes:
-      - redis_data:/data
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - frontend/.env
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
 
 volumes:
   redis_data:
